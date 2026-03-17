@@ -7,51 +7,56 @@ from visualizer import draw_on_ax
 from map_visualizer import get_coordinates, city_from_name, draw_route_on_map
 from algorithms.two_opt import distance, swap_reduces_distance, two_opt
 from algorithms.simulated_annealing import simulated_annealing
+from algorithms.ant_colony import ant_colony
+
+import time
+
+def run_benchmark(cities):
+    results = []
+    start = time.time()
+    greedy_route = greedy(cities)
+    elapsed = time.time() - start
+    results.append(("Greedy", total_distance(greedy_route), elapsed))
+
+    start = time.time()
+    genetic_route, _ = genetic(cities)
+    elapsed = time.time() - start
+    results.append(("Genetic", total_distance(genetic_route), elapsed))
+
+    start = time.time()
+    two_opt_route = two_opt(greedy_route.copy())
+    elapsed = time.time() - start
+    results.append(("Two_opt", total_distance(two_opt_route), elapsed))
+
+    start = time.time()
+    sa_route = simulated_annealing(greedy_route.copy())
+    elapsed = time.time() - start
+    results.append(("Simulated_ann", total_distance(sa_route), elapsed))
+
+    start = time.time()
+    ant_colony_route = ant_colony(cities)
+    elapsed = time.time() - start
+    results.append(("Ant_colony", total_distance(ant_colony_route), elapsed))
+
+    print(f"{'Алгоритм':<20} {'Длина':<15} {'Время (сек)':<15}")
+    print("-" * 50)
+    for name, dist, t in results:
+        print(f"{name:<20} {dist:<15.2f} {t:<15.4f}")
+
+    return results
 
 
-#city_names = ["Алматы","Астана","Шымкент","Семей","Караганда"]
-#real_cities = [city_from_name(name) for name in city_names]
-#real_cities = [c for c in real_cities if c is not None]
 
-#print([c.name for c in real_cities])
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--cities", type = int, default = 20)
+parser.add_argument("--algorithm", type = str, default = "all")
+parser.add_argument("--benchmark", action = "store_true")
+args = parser.parse_args()
 
-#greedy_route = greedy(real_cities)
-#draw_route_on_map(real_cities, greedy_route, "route.html")
+test_cities = [City(random.randint(0, 100), random.randint(0, 100), f"City_{i}") for i in range(args.cities)]
 
-test_cities = [City(random.randint(0, 100), random.randint(0, 100), f"City_{i}") for i in range(50)]
-test_route, test_history = genetic(test_cities)
-
-test_total_route = total_distance(test_route)
-test_two_opt = two_opt(test_route)
-test_total_dist = total_distance(test_two_opt)
-print("До 2-opt:", test_total_route)
-print("После 2-opt:", test_total_dist)
-
-#test_simul_route = total_distance(test_route)
-#test_sim_ann = simulated_annealing(test_route)
-#test_total_dist_sim = total_distance(test_sim_ann)
-#print("До Sim_ann", test_total_route)
-#print("После Sim_ann", test_total_dist_sim)
+if args.benchmark:
+    run_benchmark(test_cities)
 
 
-
-greedy_route = greedy(test_cities)
-print("Greedy:", total_distance(greedy_route))
-
-sa_route = simulated_annealing(greedy_route.copy())
-print("SA:", total_distance(sa_route))
-
-greedy_optimized = two_opt(greedy_route)
-print("Greedy + 2-opt:", total_distance(greedy_optimized))
-
-
-
-
-
-plt.figure(figsize=(10, 5))
-plt.plot(test_history)
-plt.title("Сходимость генетического алгоритма")
-plt.xlabel("Поколение")
-plt.ylabel("Длина маршрута")
-plt.grid(True)
-plt.show()
